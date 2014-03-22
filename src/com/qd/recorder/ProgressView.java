@@ -23,11 +23,11 @@ public class ProgressView extends View
 	public ProgressView(Context paramContext, AttributeSet paramAttributeSet) {
 		super(paramContext, paramAttributeSet);
 		init(paramContext);
-
+		
 	}
 
 	public ProgressView(Context paramContext, AttributeSet paramAttributeSet,
-						int paramInt) {
+			int paramInt) {
 		super(paramContext, paramAttributeSet, paramInt);
 		init(paramContext);
 	}
@@ -82,7 +82,6 @@ public class ProgressView extends View
 	 */
 	public static enum State {
 		START(0x1),PAUSE(0x2);
-
 		static State mapIntToValue(final int stateInt) {
 			for (State value : State.values()) {
 				if (stateInt == value.getIntValue()) {
@@ -102,7 +101,6 @@ public class ProgressView extends View
 			return mIntValue;
 		}
 	}
-
 
 	private volatile State currentState = State.PAUSE;//当前状态
 	private boolean isVisible = true;//一闪一闪的黄色区域是否可见
