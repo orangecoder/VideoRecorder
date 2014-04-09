@@ -101,6 +101,7 @@ public class ProgressView extends View
 			return mIntValue;
 		}
 	}
+<<<<<<< HEAD
 
 	private volatile State currentState = State.PAUSE;//å½“å‰çŠ¶æ€
 	private boolean isVisible = true;//ä¸€é—ªä¸€é—ªçš„é»„è‰²åŒºåŸŸæ˜¯å¦å¯è§
@@ -110,6 +111,18 @@ public class ProgressView extends View
 	private long initTime;//ç»˜åˆ¶å®Œæˆæ—¶çš„æ—¶é—´æˆ³
 	private long drawFlashTime = 0;//é—ªåŠ¨çš„é»„è‰²åŒºåŸŸæ—¶é—´æˆ³
 
+=======
+	
+	
+	private volatile State currentState = State.PAUSE;//µ±Ç°×´Ì¬
+	private boolean isVisible = true;//Ò»ÉÁÒ»ÉÁµÄ»ÆÉ«ÇøÓòÊÇ·ñ¿É¼û
+	private float countWidth = 0;//Ã¿´Î»æÖÆÍê³É£¬½ø¶ÈÌõµÄ³¤¶È
+	private float perProgress = 0;//ÊÖÖ¸°´ÏÂÊ±£¬½ø¶ÈÌõÃ¿´ÎÔö³¤µÄ³¤¶È
+	private float perSecProgress = 0;//Ã¿ºÁÃë¶ÔÓ¦µÄÏñËØµã
+	private long initTime;//»æÖÆÍê³ÉÊ±µÄÊ±¼ä´Á
+	private long drawFlashTime = 0;//ÉÁ¶¯µÄ»ÆÉ«ÇøÓòÊ±¼ä´Á
+	
+>>>>>>> å¯åŠ¨é€Ÿåº¦åšäº†ä¸€äº›ä¼˜åŒ–
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
 		long curTime = System.currentTimeMillis();
