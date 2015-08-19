@@ -19,7 +19,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
@@ -63,11 +62,6 @@ import com.googlecode.javacv.cpp.opencv_core.IplImage;
 import com.qd.recorder.ProgressView.State;
 import com.qd.videorecorder.R;
 
-
-
-
-
-
 public class FFmpegRecorderActivity extends Activity implements OnClickListener, OnTouchListener {
 
 	private final static String CLASS_LABEL = "RecordActivity";
@@ -88,9 +82,8 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	boolean	isRecordingStarted = false;
 	//是否开启闪光灯
 	boolean isFlashOn = false;
-	TextView txtTimer, txtRecordingSize;
-	//分别为闪光灯按钮、取消按钮、下一步按钮、转置摄像头按钮
-	Button flashIcon = null,cancelBtn,nextBtn,switchCameraIcon = null;
+	//分别为闪光灯按钮、转置摄像头按钮、取消按钮、下一步按钮
+	Button flashIcon = null, switchCameraIcon = null, cancelBtn, nextBtn;
 	boolean nextEnabled = false;
 	
 	//录制视频和保存音频的类
@@ -104,7 +97,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 
 	//预览的宽高和屏幕宽高
 	private int previewWidth = 480, screenWidth = 480;
-	private int previewHeight = 480, screenHeight = 800;
+	private int previewHeight = 480, screenHeight = 480;
 	
 	//音频的采样率，recorderParameters中会有默认值
 	private int sampleRate = 44100;
@@ -123,16 +116,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	//IplImage对象,用于存储摄像头返回的byte[]，以及图片的宽高，depth，channel等
 	private IplImage yuvIplImage = null;
 	//分别为 默认摄像头（后置）、默认调用摄像头的分辨率、被选择的摄像头（前置或者后置）
-	int defaultCameraId = -1, defaultScreenResolution = -1 , cameraSelection = 0;
-
-	//Handler handler = new Handler();
-	/*private Runnable mUpdateTimeTask = new Runnable() {
-		public void run() {
-			if(rec)
-				setTotalVideoTime();
-			handler.postDelayed(this, 200);
-		}
-	};*/
+	int defaultCameraId = -1, defaultScreenResolution = 10 , cameraSelection = 0;
 
 	private Dialog dialog = null;
 	//包含显示摄像头数据的surfaceView
@@ -151,7 +135,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	//录制的有效总时间
 	long totalTime = 0;
 	//视频帧率
-	private int frameRate = RecorderParameters.videoFrameRate;
+	private int frameRate = 24;
 	//录制的最长时间
 	public static int recordingTime = 30000;
 	//录制的最短时间
@@ -174,7 +158,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	private SavedFrames lastSavedframe = new SavedFrames(null,0L);
 	//视频时间戳
 	private long mVideoTimestamp = 0L;
-	//时候保存过视频文件
+	//是否保存过视频文件
 	private boolean isRecordingSaved = false;
 	private boolean isFinalizing = false;
 	
@@ -218,17 +202,18 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 					break;
 				case 3:
 					if(!recording)
+					{
 						initiateRecording(true);
-					else{
+					}else{
 						//更新暂停的时间
 						stopPauseTime = System.currentTimeMillis();
 						totalPauseTime = stopPauseTime - startPauseTime - ((long) (1.0/(double)frameRate)*1000);
 						pausedTime += totalPauseTime;
 					}
+					
 					rec = true;
 					//开始进度条增长
 					progressView.setCurrentState(State.START);
-					//setTotalVideoTime();
 				break;
 				case 4:
 					//设置进度条暂停状态
@@ -288,7 +273,9 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	@Override
 	public boolean dispatchTouchEvent(MotionEvent ev) {
 		if(!initSuccess)
+		{
 			return false;
+		}
 		return super.dispatchTouchEvent(ev);
 	}
 
@@ -352,7 +339,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		cancelBtn.setOnClickListener(this);
 		nextBtn = (Button) findViewById(R.id.recorder_next);
 		nextBtn.setOnClickListener(this);
-		//txtTimer = (TextView)findViewById(R.id.txtTimer);
 		flashIcon = (Button)findViewById(R.id.recorder_flashlight);
 		switchCameraIcon = (Button)findViewById(R.id.recorder_frontcamera);
 		flashIcon.setOnClickListener(this);
@@ -397,29 +383,18 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 				
 				handleSurfaceChanged();
 				//设置surface的宽高
-				RelativeLayout.LayoutParams layoutParam1 = new RelativeLayout.LayoutParams(screenWidth,(int) (screenWidth*(previewWidth/(previewHeight*1f))));
-				layoutParam1.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
-				//int margin = Util.calculateMargin(previewWidth, screenWidth);
-				//layoutParam1.setMargins(0,margin,0,margin);
-
-				RelativeLayout.LayoutParams layoutParam2 = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT);
-				layoutParam2.topMargin = screenWidth;
-				
-				View view = new View(FFmpegRecorderActivity.this);
-				view.setFocusable(false);
-				view.setBackgroundColor(Color.BLACK);
-				view.setFocusableInTouchMode(false);
-				
+				RelativeLayout.LayoutParams layoutParam1 = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT);
 				topLayout.addView(cameraView, layoutParam1);
-				topLayout.addView(view,layoutParam2);
 				
 				topLayout.setOnTouchListener(FFmpegRecorderActivity.this);
 				
 				switchCameraIcon.setOnClickListener(FFmpegRecorderActivity.this);
 				if(cameraSelection == CameraInfo.CAMERA_FACING_FRONT)
+				{
 					flashIcon.setVisibility(View.GONE);
-				else
+				}else{
 					flashIcon.setVisibility(View.VISIBLE);
+				}
 			}
 			
 		}.execute("start");
@@ -429,7 +404,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	{
 		try
 		{
-			
 			if(Build.VERSION.SDK_INT > Build.VERSION_CODES.FROYO)
 			{
 				int numberOfCameras = Camera.getNumberOfCameras();
@@ -444,13 +418,16 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 			}
 			stopPreview();
 			if(mCamera != null)
+			{
 				mCamera.release();
+			}
 			
 			if(defaultCameraId >= 0)
+			{
 				cameraDevice = Camera.open(defaultCameraId);
-			else
+			}else{
 				cameraDevice = Camera.open();
-
+			}
 		}
 		catch(Exception e)
 		{	
@@ -469,8 +446,8 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		frameTime = (1000000L / frameRate);
 		
 		fileVideoPath = new File(strVideoPath); 
-		videoRecorder = new NewFFmpegFrameRecorder(strVideoPath, 480, 480, 1);
-		videoRecorder = new NewFFmpegFrameRecorder(strVideoPath, recorderParameters.getVidioWidth(), recorderParameters.getVidioHeight(), 1);
+//		videoRecorder = new NewFFmpegFrameRecorder(strVideoPath, 480, 480, 1);
+		videoRecorder = new NewFFmpegFrameRecorder(strVideoPath, previewWidth, previewHeight, 1);
 		videoRecorder.setFormat(recorderParameters.getVideoOutputFormat());
 		videoRecorder.setSampleRate(recorderParameters.getAudioSamplingRate());
 		videoRecorder.setFrameRate(recorderParameters.getVideoFrameRate());
@@ -526,8 +503,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 			bar = (ProgressBar) creatingProgress.findViewById(R.id.recorder_progress_progressbar);
 			creatingProgress.show();
 			
-			//txtTimer.setVisibility(View.INVISIBLE);
-			//handler.removeCallbacks(mUpdateTimeTask);
 			super.onPreExecute();
 		}
 		
@@ -547,9 +522,8 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 			publishProgress(10);
 			
 			String captureBitmapPath = CONSTANTS.CAMERA_FOLDER_PATH;
-			
 			captureBitmapPath = Util.createImagePath(FFmpegRecorderActivity.this);
-			YuvImage localYuvImage = new YuvImage(data, 17, previewWidth,previewHeight, null);
+			YuvImage localYuvImage = new YuvImage(data, 17, previewWidth, previewHeight, null);
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			FileOutputStream outStream = null;
 			
@@ -559,7 +533,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 				File file = new File(captureBitmapPath);
 				if(!file.exists())
 					file.createNewFile();
-				localYuvImage.compressToJpeg(new Rect(0, 0, previewWidth, previewHeight),100, bos);
+				localYuvImage.compressToJpeg(new Rect(0, 0, previewWidth, previewHeight), 100, bos);
 				Bitmap localBitmap1 = BitmapFactory.decodeByteArray(bos.toByteArray(),
 						0,bos.toByteArray().length);
 				
@@ -605,7 +579,9 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		@Override
 		protected Void doInBackground(Void... params) {
 			if(firstData != null)
+			{
 				getFirstCapture(firstData);
+			}
 			isFinalizing = false;
 			if (videoRecorder != null && recording) {
 				recording = false;
@@ -633,7 +609,9 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 			@Override
 			public void dispatchMessage(Message msg) {
 				if(msg.what == 1)
+				{
 					videoTheEnd(false);
+				}
 			}
 		});
 	}
@@ -641,9 +619,11 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	@Override
 	public void onBackPressed() {
 		if (recording) 
+		{
 			showCancellDialog();
-		else
+		}else{
 			videoTheEnd(false);
+		}
 	}
 
 	/**
@@ -729,7 +709,9 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 					updateTimestamp();
 					bufferReadResult = this.audioRecord.read(audioData, 0, audioData.length);
 					if ((bufferReadResult > 0) && ((recording && rec) || (mVideoTimestamp > mAudioTimestamp)))
+					{
 						record(ShortBuffer.wrap(audioData, 0, bufferReadResult));
+					}
 				}
 				this.audioRecord.stop();
 				this.audioRecord.release();
@@ -774,7 +756,9 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 
 		public void surfaceChanged(SurfaceHolder  holder, int format, int width, int height) {
 			if (isPreviewOn)
+			{
 				mCamera.stopPreview();
+			}
 			handleSurfaceChanged();
 			startPreview();  
 			mCamera.autoFocus(null);
@@ -944,11 +928,11 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		//计算时间戳
 		long frameTimeStamp = 0L;
 		if(mAudioTimestamp == 0L && firstTime > 0L)
-			frameTimeStamp = 1000L * (System.currentTimeMillis() -firstTime);
-		else if (mLastAudioTimestamp == mAudioTimestamp)
-			frameTimeStamp = mAudioTimestamp + frameTime;
-		else
 		{
+			frameTimeStamp = 1000L * (System.currentTimeMillis() - firstTime);
+		}else if (mLastAudioTimestamp == mAudioTimestamp){
+			frameTimeStamp = mAudioTimestamp + frameTime;
+		}else{
 			long l2 = (System.nanoTime() - mAudioTimeRecorded) / 1000L;
 			frameTimeStamp = l2 + mAudioTimestamp;
 			mLastAudioTimestamp = mAudioTimestamp;
@@ -956,38 +940,40 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		
 		//录制视频
 		synchronized (mVideoRecordLock) {
-			if (recording && rec && lastSavedframe != null && lastSavedframe.getFrameBytesData() != null && yuvIplImage != null) 
-			{
-				//保存某一幀的图片
-				if(isFirstFrame){
-					isFirstFrame = false;
-					firstData = data;
-					/*Message msg = mHandler.obtainMessage(1);
-					msg.obj = data;
-					msg.what = 1;
-					mHandler.sendMessage(msg);*/
+				if (recording && rec && lastSavedframe!=null && lastSavedframe.getFrameBytesData()!=null && yuvIplImage!=null) 
+				{
+					//保存某一幀的图片
+					if(isFirstFrame){
+						isFirstFrame = false;
+						firstData = data;
+						/*Message msg = mHandler.obtainMessage(1);
+						msg.obj = data;
+						msg.what = 1;
+						mHandler.sendMessage(msg);*/
+						
+					}
+					//超过最低时间时，下一步按钮可点击
+					totalTime = System.currentTimeMillis() - firstTime - pausedTime - ((long) (1.0/(double)frameRate)*1000);
+					if(!nextEnabled && totalTime >= recordingChangeTime){
+						nextEnabled = true;
+						nextBtn.setEnabled(true);
+					}
 					
-				}
-				//超过最低时间时，下一步按钮可点击
-				totalTime = System.currentTimeMillis() - firstTime - pausedTime - ((long) (1.0/(double)frameRate)*1000);
-				if(!nextEnabled && totalTime >= recordingChangeTime){
-					nextEnabled = true;
-					nextBtn.setEnabled(true);
-				}
-				
-				if(nextEnabled && totalTime >= recordingMinimumTime){
-					mHandler.sendEmptyMessage(5);
-				}
-				
-				if(currentRecorderState == RecorderState.PRESS && totalTime >= recordingChangeTime){
-					currentRecorderState = RecorderState.LOOSEN;
-					mHandler.sendEmptyMessage(2);
-				}
-				
-				mVideoTimestamp += frameTime;
-				if(lastSavedframe.getTimeStamp() > mVideoTimestamp)
-				mVideoTimestamp = lastSavedframe.getTimeStamp();
-				try {
+					if(nextEnabled && totalTime >= recordingMinimumTime){
+						mHandler.sendEmptyMessage(5);
+					}
+					
+					if(currentRecorderState == RecorderState.PRESS && totalTime >= recordingChangeTime){
+						currentRecorderState = RecorderState.LOOSEN;
+						mHandler.sendEmptyMessage(2);
+					}
+					
+					mVideoTimestamp += frameTime;
+					if(lastSavedframe.getTimeStamp() > mVideoTimestamp)
+					{
+						mVideoTimestamp = lastSavedframe.getTimeStamp();
+					}
+					try {
 						yuvIplImage.getByteBuffer().put(lastSavedframe.getFrameBytesData());
 						videoRecorder.setTimestamp(lastSavedframe.getTimeStamp());
 						videoRecorder.record(yuvIplImage);
@@ -996,10 +982,13 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 						e.printStackTrace();
 					}
 				}
+			
 				byte[] tempData = rotateYUV420Degree90(data, previewWidth, previewHeight);
 				if(cameraSelection == 1)
+				{
 					tempData = rotateYUV420Degree270(data, previewWidth, previewHeight);
-				lastSavedframe = new SavedFrames(tempData,frameTimeStamp);
+				}
+				lastSavedframe = new SavedFrames(tempData, frameTimeStamp);
 			}
 		}
 	}
@@ -1021,8 +1010,9 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 					mHandler.removeMessages(3);
 					mHandler.removeMessages(4);
 					if(rec)
+					{
 						mHandler.sendEmptyMessage(4);
-					
+					}
 					break;
 				}
 			}else{
@@ -1055,34 +1045,61 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		List<Camera.Size> resolutionList = Util.getResolutionList(mCamera);
 		if(resolutionList != null && resolutionList.size() > 0){
 			Collections.sort(resolutionList, new Util.ResolutionComparator());
-			Camera.Size previewSize =  null;	
-			if(defaultScreenResolution == -1){
-				boolean hasSize = false;
-				//如果摄像头支持640*480，那么强制设为640*480
-				for(int i = 0;i<resolutionList.size();i++){
-					Size size = resolutionList.get(i);
-					if(size != null && size.width==640 && size.height==480){
-						previewSize = size;
-						hasSize = true;
-						break;
-					}
-				}
-				//如果不支持设为中间的那个
-				if(!hasSize){
-					int mediumResolution = resolutionList.size()/2;
-					if(mediumResolution >= resolutionList.size())
-						mediumResolution = resolutionList.size() - 1;
-					previewSize = resolutionList.get(mediumResolution);
-				}
-			}else{
-				if(defaultScreenResolution >= resolutionList.size())
-					defaultScreenResolution = resolutionList.size() - 1;
-				previewSize = resolutionList.get(defaultScreenResolution);
+			
+			for (Size size : resolutionList) {
+				Log.e("test", "width:"+size.width+";height:"+size.height);
 			}
+			
+			Camera.Size previewSize =  null;	
+//			if(defaultScreenResolution == -1){
+//				boolean hasSize = false;
+//				//如果摄像头支持640*480，那么强制设为640*480
+//				for(int i = 0;i<resolutionList.size();i++){
+//					Size size = resolutionList.get(i);
+//					if(size != null && size.width==640 && size.height==480){
+//						previewSize = size;
+//						hasSize = true;
+//						break;
+//					}
+//				}
+//				//如果不支持设为中间的那个
+//				if(!hasSize){
+//					int mediumResolution = resolutionList.size()/2;
+//					if(mediumResolution >= resolutionList.size())
+//						mediumResolution = resolutionList.size() - 1;
+//					previewSize = resolutionList.get(mediumResolution);
+//				}
+//			}else{
+//				if(defaultScreenResolution >= resolutionList.size())
+//					defaultScreenResolution = resolutionList.size() - 1;
+//				previewSize = resolutionList.get(defaultScreenResolution);
+//			}
+			
+			boolean hasSize = false;
+			//如果摄像头支持640*480，那么强制设为640*480
+			for(int i = 0;i<resolutionList.size();i++){
+				Size size = resolutionList.get(i);
+				if(size != null && size.width==640 || size.height==640){
+					previewSize = size;
+					hasSize = true;
+					break;
+				}
+			}
+			//如果不支持设为中间的那个
+			if(!hasSize){
+				int mediumResolution = resolutionList.size()/2;
+				if(mediumResolution >= resolutionList.size())
+					mediumResolution = resolutionList.size() - 1;
+				previewSize = resolutionList.get(mediumResolution);
+			}
+			
 			//获取计算过的摄像头分辨率
 			if(previewSize != null ){
 				previewWidth = previewSize.width;
 				previewHeight = previewSize.height;
+				Log.e("test", "previewWidth:"+previewWidth);
+				Log.e("test", "previewHeight:"+previewHeight);
+				
 				cameraParameters.setPreviewSize(previewWidth, previewHeight);
 				if(videoRecorder != null)
 				{
@@ -1096,7 +1113,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		cameraParameters.setPreviewFrameRate(frameRate);
 		//构建一个IplImage对象，用于录制视频
 		//和opencv中的cvCreateImage方法一样
-		yuvIplImage = IplImage.create(previewHeight, previewWidth,IPL_DEPTH_8U, 2);
+		yuvIplImage = IplImage.create(previewHeight, previewWidth, IPL_DEPTH_8U, 2);
 
 		//系统版本为8一下的不支持这种对焦
 		if(Build.VERSION.SDK_INT >  Build.VERSION_CODES.FROYO)
@@ -1112,14 +1129,16 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 					 cameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
 				 }else if(focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)){
 					cameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
-				}else
+				}else{
 					cameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
+				}
 			}
 		}
-		else
+		else{
 			mCamera.setDisplayOrientation(90);
+		}
+			
 		mCamera.setParameters(cameraParameters);
-
 	}
 	@Override
 	public void onClick(View v) {
@@ -1129,7 +1148,9 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 				rec = false;
 				saveRecording();
 			}else
+			{
 				initiateRecording(false);
+			}
 		}else if(v.getId() == R.id.recorder_flashlight){
 			if(!getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)){
 				//showToast(this, "不能开启闪光灯");
@@ -1163,9 +1184,11 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 			}
 		}else if(v.getId() == R.id.recorder_cancel){
 			if (recording) 
+			{
 				showCancellDialog();
-			else
+			}else{
 				videoTheEnd(false);
+			}
 		}
 	}
 
@@ -1178,7 +1201,9 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	{
 		releaseResources();
 		if(fileVideoPath != null && fileVideoPath.exists() && !isSuccess)
+		{
 			fileVideoPath.delete();
+		}
 		
 		returnToCaller(isSuccess);
 	}
@@ -1235,7 +1260,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		} finally{}
 		Util.videoContentValues = null;
 	}
-	
 
 	/**
 	 * 保存录制的视频文件
@@ -1254,15 +1278,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	}
 
 	/**
-	 * 求出录制的总时间
-	
-	private synchronized void setTotalVideoTime(){
-		if(totalTime > 0)
-			txtTimer.setText(Util.getRecordingTimeFromMillis(totalTime));
-		
-	} */
-	
-	/**
 	 * 释放资源，停止录制视频和音频
 	 */
 	private void releaseResources(){
@@ -1270,8 +1285,8 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		try {
 			if(videoRecorder != null)
 			{
-			videoRecorder.stop();
-			videoRecorder.release();
+				videoRecorder.stop();
+				videoRecorder.release();
 			}
 		} catch (com.googlecode.javacv.FrameRecorder.Exception e) {
 			e.printStackTrace();
@@ -1281,7 +1296,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		videoRecorder = null;
 		lastSavedframe = null;
 		
-		//progressView.putProgressList((int) totalTime);
 		//停止刷新进度
 		progressView.setCurrentState(State.PAUSE);
 	}
@@ -1298,10 +1312,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		recording = true;
 		totalPauseTime = 0;
 		pausedTime = 0;
-		
-		//txtTimer.setVisibility(View.VISIBLE);
-		//handler.removeCallbacks(mUpdateTimeTask);
-		//handler.postDelayed(mUpdateTimeTask, 100);
 	}
 	
 	public static enum RecorderState {

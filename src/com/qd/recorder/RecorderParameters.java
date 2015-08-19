@@ -6,40 +6,25 @@ import com.googlecode.javacv.cpp.avcodec;
 
 public class RecorderParameters {
 
-	private static boolean AAC_SUPPORTED  = Build.VERSION.SDK_INT >= 10;
-	//private int videoCodec = avcodec.AV_CODEC_ID_H264;
+	private boolean AAC_SUPPORTED  = Build.VERSION.SDK_INT >= 10;
 	private int videoCodec = avcodec.AV_CODEC_ID_MPEG4;
-	public static int videoFrameRate = 24;
-	//private int videoBitrate = 500 *1000;
+	public int videoFrameRate = 24;
 	private int videoQuality = 12;
 	private int audioCodec = AAC_SUPPORTED ? avcodec.AV_CODEC_ID_AAC : avcodec.AV_CODEC_ID_AMR_NB;
 	private int audioChannel = 1;
-	private int audioBitrate = 96000;//192000;//AAC_SUPPORTED ? 96000 : 12200; 
+	private int audioBitrate = 96000;
 	private int videoBitrate = 1000000;
 	private int audioSamplingRate = AAC_SUPPORTED ? 44100 : 8000; 
-	private String videoOutputFormat = AAC_SUPPORTED ? "mp4"  : "3gp"; 
+	private String videoOutputFormat = AAC_SUPPORTED ? "mp4" : "3gp"; 
 	private int vidioWidth = 480;
 	private int vidioHeight = 480;
-		
-	public static boolean isAAC_SUPPORTED() {
+	
+	public boolean isAAC_SUPPORTED() {
 		return AAC_SUPPORTED;
 	}
-	public static void setAAC_SUPPORTED(boolean aAC_SUPPORTED) {
+	public void setAAC_SUPPORTED(boolean aAC_SUPPORTED) {
 		AAC_SUPPORTED = aAC_SUPPORTED;
 	}
-	public String getVideoOutputFormat() {
-		return videoOutputFormat;
-	}
-	public void setVideoOutputFormat(String videoOutputFormat) {
-		this.videoOutputFormat = videoOutputFormat;
-	}
-	public int getAudioSamplingRate() {
-		return audioSamplingRate;
-	}
-	public void setAudioSamplingRate(int audioSamplingRate) {
-		this.audioSamplingRate = audioSamplingRate;
-	}
-	
 	public int getVideoCodec() {
 		return videoCodec;
 	}
@@ -51,8 +36,7 @@ public class RecorderParameters {
 	}
 	public void setVideoFrameRate(int videoFrameRate) {
 		this.videoFrameRate = videoFrameRate;
-	}	
-	
+	}
 	public int getVideoQuality() {
 		return videoQuality;
 	}
@@ -83,6 +67,18 @@ public class RecorderParameters {
 	public void setVideoBitrate(int videoBitrate) {
 		this.videoBitrate = videoBitrate;
 	}
+	public int getAudioSamplingRate() {
+		return audioSamplingRate;
+	}
+	public void setAudioSamplingRate(int audioSamplingRate) {
+		this.audioSamplingRate = audioSamplingRate;
+	}
+	public String getVideoOutputFormat() {
+		return videoOutputFormat;
+	}
+	public void setVideoOutputFormat(String videoOutputFormat) {
+		this.videoOutputFormat = videoOutputFormat;
+	}
 	public int getVidioWidth() {
 		return vidioWidth;
 	}
@@ -95,6 +91,5 @@ public class RecorderParameters {
 	public void setVidioHeight(int vidioHeight) {
 		this.vidioHeight = vidioHeight;
 	}
-	
 	
 }
