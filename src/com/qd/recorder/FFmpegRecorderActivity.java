@@ -59,6 +59,7 @@ import android.widget.TextView;
 
 import com.googlecode.javacv.FrameRecorder;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
+import com.googlecode.javacv.cpp.opencv_videostab.LogToStdout;
 import com.qd.recorder.ProgressView.State;
 import com.qd.videorecorder.R;
 
@@ -974,6 +975,9 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 						mVideoTimestamp = lastSavedframe.getTimeStamp();
 					}
 					try {
+						Log.e("recorde", "width:"+previewWidth);
+						Log.e("recorde", "height:"+previewHeight);
+						yuvIplImage = IplImage.create(previewHeight, previewWidth, IPL_DEPTH_8U, 2);
 						yuvIplImage.getByteBuffer().put(lastSavedframe.getFrameBytesData());
 						videoRecorder.setTimestamp(lastSavedframe.getTimeStamp());
 						videoRecorder.record(yuvIplImage);
@@ -1097,8 +1101,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 			if(previewSize != null ){
 				previewWidth = previewSize.width;
 				previewHeight = previewSize.height;
-				Log.e("test", "previewWidth:"+previewWidth);
-				Log.e("test", "previewHeight:"+previewHeight);
 				
 				cameraParameters.setPreviewSize(previewWidth, previewHeight);
 				if(videoRecorder != null)
@@ -1106,7 +1108,11 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 					videoRecorder.setImageWidth(previewWidth);
 					videoRecorder.setImageHeight(previewHeight);
 				}
-
+				
+				Log.e("test", "cameraWidth:"+previewWidth);
+				Log.e("test", "cameraHeight:"+previewHeight);
+				Log.e("test", "recorderWidth:"+videoRecorder.getImageWidth());
+				Log.e("test", "recorderHeight:"+videoRecorder.getImageHeight());
 			}
 		}
 		//设置预览帧率
@@ -1140,6 +1146,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 			
 		mCamera.setParameters(cameraParameters);
 	}
+	
 	@Override
 	public void onClick(View v) {
 		//下一步
@@ -1192,7 +1199,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		}
 	}
 
-	
 	/**
 	 * 结束录制
 	 * @param isSuccess
