@@ -99,28 +99,4 @@
 
     </RelativeLayout>
 
-<<<<<<< HEAD
-=======
-    <RelativeLayout
-        android:id="@+id/recorder_surface_parent"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@id/recorder_bottom"
-        android:layout_below="@id/recorder_progress">
-        <SurfaceView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="gone" />
-    </RelativeLayout>
-    
-    <ImageView android:background="#7f000000"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:id="@+id/recorder_surface_state"
-        android:layout_below="@id/recorder_progress"
-        android:scaleType="center"
-        android:focusable="false"
-        android:clickable="false"/>
-
->>>>>>> 启动速度做了一些优化
 </RelativeLayout>
